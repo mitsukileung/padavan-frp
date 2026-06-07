@@ -98,7 +98,7 @@ fi
 get_ver() {
 	find_bin
 	if [ -f "$frpc" ] ; then
- 		[ ! -x "$frpc" ] && chmod +x $frps
+ 		[ ! -x "$frpc" ] && chmod +x $frpc
 		frpc_ver="$($frpc --version)"
 		if [ -z "$frpc_ver" ] ; then
 			frpc_v=""
@@ -108,7 +108,7 @@ get_ver() {
 	fi
 	if [ -f "$frps" ] ; then
  		[ ! -x "$frps" ] && chmod +x $frps
-		frpc_ver="$($frps --version)"
+		frps_ver="$($frps --version)"
 		if [ -z "$frps_ver" ] ; then
 			frps_v=""
 		else
@@ -119,74 +119,59 @@ get_ver() {
 
 }
 
+# 锁定版本 v0.61.1，不再联网获取
 get_tag() {
-	curltest=`which curl`
-	logger -t "【Frp】" "开始获取最新版本..."
-    	if [ -z "$curltest" ] || [ ! -s "`which curl`" ] ; then
-      		tag="$( wget --no-check-certificate -T 5 -t 3 --user-agent "$user_agent" --output-document=-  https://api.github.com/repos/fatedier/frp/releases/latest 2>&1 | grep 'tag_name' | cut -d\" -f4 )"
-	 	[ -z "$tag" ] && tag="$( wget --no-check-certificate -T 5 -t 3 --user-agent "$user_agent" --quiet --output-document=-  https://api.github.com/repos/fatedier/frp/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
-    	else
-      		tag="$( curl -k --connect-timeout 3 --user-agent "$user_agent"  https://api.github.com/repos/fatedier/frp/releases/latest 2>&1 | grep 'tag_name' | cut -d\" -f4 )"
-       	[ -z "$tag" ] && tag="$( curl -Lk --connect-timeout 3 --user-agent "$user_agent" -s  https://api.github.com/repos/fatedier/frp/releases/latest  2>&1 | grep 'tag_name' | cut -d\" -f4 )"
-        fi
-	[ -z "$tag" ] && logger -t "【Frp】" "无法获取最新版本"
+	tag="v0.61.1"
 	nvram set frp_ver_n=$tag
-	
+	logger -t "【Frp】" "已锁定版本: $tag"
 }
 
+# 下载逻辑：保留代理 + 改用新地址直链
 frp_dl () 
 {
 	tag="$1"
-	newtag="$(echo "$tag" | tr -d 'v' | tr -d ' ')"
+	newtag="61.1"
 	mkdir -p /tmp/frp
  	frpc_path=$(dirname "$frpc")
 	[ ! -d "$frpc_path" ] && mkdir -p "$frpc_path"
  	frps_path=$(dirname "$frps")
 	[ ! -d "$frps_path" ] && mkdir -p "$frps_path"
-	logger -t "【Frp】" "开始下载 https://github.com/fatedier/frp/releases/download/${tag}/frp_${newtag}_linux_mipsle.tar.gz"
+
+	# 下载地址
+	frpc_url="https://raw.githubusercontent.com/mitsukileung/padavan-frp/main/frpc"
+	frps_url="https://raw.githubusercontent.com/mitsukileung/padavan-frp/main/frps"
+
+	logger -t "【Frp】" "开始下载 frp 二进制文件"
 	for proxy in $github_proxys ; do
- 	length=$(wget --no-check-certificate -T 5 -t 3 "${proxy}https://github.com/fatedier/frp/releases/download/${tag}/frp_${newtag}_linux_mipsle.tar.gz" -O /dev/null --spider --server-response 2>&1 | grep "[Cc]ontent-[Ll]ength" | grep -Eo '[0-9]+' | tail -n 1)
- 	length=`expr $length + 512000`
-	length=`expr $length / 1048576`
- 	frp_size0="$(check_disk_size $frpc_path)"
- 	[ ! -z "$length" ] && logger -t "【Frp】" "frp_linux_mipsle.tar.gz压缩包大小 ${length}M， 程序路径可用空间 ${frp_size0}M "
-        curl -Lko "/tmp/frp_linux_mipsle.tar.gz" "${proxy}https://github.com/fatedier/frp/releases/download/${tag}/frp_${newtag}_linux_mipsle.tar.gz" || wget --no-check-certificate -O "/tmp/frp_linux_mipsle.tar.gz" "${proxy}https://github.com/fatedier/frp/releases/download/${tag}/frp_${newtag}_linux_mipsle.tar.gz"
-	if [ "$?" = 0 ] ; then
-		tar -xz -C /tmp -f /tmp/frp_linux_mipsle.tar.gz
-		frpc_size="$(du -k /tmp/frp_${newtag}_linux_mipsle/frpc | awk '{print int($1 / 1024)}')"
-		frps_size="$(du -k /tmp/frp_${newtag}_linux_mipsle/frps | awk '{print int($1 / 1024)}')"
-		frpc_path=$(dirname "$frpc")
-		frps_path=$(dirname "$frps")
-		if [ "$frpc_enable" = "1" ] ; then
-			router_size="$(check_disk_size $frpc_path)"
-   			chmod +x /tmp/frp_${newtag}_linux_mipsle/frpc
-			if [ "$(($(/tmp/frp_${newtag}_linux_mipsle/frpc -h 2>&1 | wc -l)))" -gt 3 ] ; then
-				logger -t "【Frp】" "frpc ${frpc_size}M 下载成功,${frpc_path}剩余可用${router_size}M安装到$frpc"
-				cp "/tmp/frp_${newtag}_linux_mipsle/frpc" "$frpc"
-				break
-       			else
-	   			logger -t "【Frp】" "frpc 下载不完整，请手动下载 ${proxy}https://github.com/fatedier/frp/releases/download/${tag}/frp_${newtag}_linux_mipsle.tar.gz 解压上传到  $frpc"
-	  		fi
+		success=0
+
+		# 下载 frpc
+		if [ "$frpc_enable" = "1" ] && [ ! -f "$frpc" ]; then
+			logger -t "【Frp】" "尝试通过代理 $proxy 下载 frpc..."
+			wget --no-check-certificate -T 5 -t 3 "${proxy}${frpc_url}" -O "$frpc"
+			if [ $? -eq 0 ]; then
+				chmod +x "$frpc"
+				logger -t "【Frp】" "frpc 下载成功"
+				success=1
+			fi
 		fi
-		if [ "$frps_enable" = "1" ] ; then
-			router_size="$(check_disk_size $frps_path)"
-   			chmod +x /tmp/frp_${newtag}_linux_mipsle/frps
-			if [ "$(($(/tmp/frp_${newtag}_linux_mipsle/frps -h 2>&1 | wc -l)))" -gt 3 ] ; then
-				logger -t "【Frp】" "frps ${frps_size}M 下载成功,${frps_path}剩余可用${router_size}M 安装到$frps"
-				cp "/tmp/frp_${newtag}_linux_mipsle/frps" "$frps"
-				break
-       			else
-	   			logger -t "【Frp】" "frps 下载不完整，请手动下载 ${proxy}https://github.com/fatedier/frp/releases/download/${tag}/frp_${newtag}_linux_mipsle.tar.gz 解压上传到  $frps"
-	  		fi
+
+		# 下载 frps
+		if [ "$frps_enable" = "1" ] && [ ! -f "$frps" ]; then
+			logger -t "【Frp】" "尝试通过代理 $proxy 下载 frps..."
+			wget --no-check-certificate -T 5 -t 3 "${proxy}${frps_url}" -O "$frps"
+			if [ $? -eq 0 ]; then
+				chmod +x "$frps"
+				logger -t "【Frp】" "frps 下载成功"
+				success=1
+			fi
 		fi
-		
-		rm -rf /tmp/frp_${newtag}_linux_mipsle /tmp/frp_linux_mipsle.tar.gz
-		
-	else
-		logger -t "【Frp】" "下载失败，请手动下载 ${proxy}https://github.com/fatedier/frp/releases/download/${tag}/frp_${newtag}_linux_mipsle.tar.gz 解压上传"
-   	fi
+
+		# 任一代理成功就退出
+		if [ $success -eq 1 ]; then
+			break
+		fi
 	done
-      
 }
 
 scriptfilepath=$(cd "$(dirname "$0")"; pwd)/$(basename $0)
@@ -221,52 +206,27 @@ frp_start ()
   [ ! -z "$frp_tag" ] && frp_tag="$(echo $frp_tag | tr -d ' ')"
   get_tag
   get_ver
-  [ ! -z "$tag" ] && newtag="$(echo "$tag" | tr -d 'v' | tr -d ' ')"
+  newtag="61.1"
+
   if [ "$frpc_enable" = "1" ] ;then
   	sed -Ei '/【frpc】|^$/d' /tmp/script/_opt_script_check
-	if [ ! -z "$newtag" ] && [ ! -z "$frpc_ver" ] ; then
-  		if [ -z "$frp_tag" ] && [ "$frpc_ver" != "$newtag" ] ; then
-  			rm -f $frpc
-  		fi
-  		if [ ! -z "$frp_tag" ] && [ "$frpc_ver" != "$frp_tag" ] ; then
-  			rm -f $frpc
-  		fi
-  	fi
-  
   	if [ ! -f "$frpc" ] || [[ "$($frpc -h 2>&1 | wc -l)" -lt 2 ]] ; then
-  		if [ ! -z "$frp_tag" ] ; then
-  			frp_dl $frp_tag
-  		else
-  			[ -z "$tag" ] && logger -t "【Frp】" "未获取到最新版本，暂用v0.61.0版本" && tag="v0.61.0"
-  			frp_dl $tag
-  		fi
+  		frp_dl $tag
   	fi
   	[ ! -f "$frpc" ] && logger -t "【Frp】" "没有$frpc 无法运行.." 
   fi
   
   if [ "$frps_enable" = "1" ] ;then
   	sed -Ei '/【frps】|^$/d' /tmp/script/_opt_script_check
-	if [ ! -z "$newtag" ] && [ ! -z "$frps_ver" ] ; then
-  		if [ -z "$frp_tag" ] && [ "$frps_ver" != "$newtag" ] ; then
-  			rm -f $frps
-  		fi
-  		if [ ! -z "$frp_tag" ] && [ "$frps_ver" != "$frp_tag" ] ; then
-  			rm -f $frps
-  		fi
-  	fi
-  
   	if [ ! -f "$frps" ] || [[ "$($frps -h 2>&1 | wc -l)" -lt 2 ]] ; then
-  		if [ ! -z "$frp_tag" ] ; then
-  			frp_dl $frp_tag
-  		else
-  			[ -z "$tag" ] && logger -t "【Frp】" "未获取到最新版本，暂用v0.61.0版本" && tag="v0.61.0"
-  			frp_dl $tag
-  		fi
+  		frp_dl $tag
   	fi
   	[ ! -f "$frps" ] && logger -t "【Frp】" "没有$frps 无法运行.." 
   fi
+
   get_ver
   eval /etc/storage/frp_script.sh &
+
  if [ "$frps_enable" = "1" ] ; then
 	sleep 4
 	[ -z "`pidof frps`" ] && logger -t "【Frp】" "frps启动失败, 注意检查端口是否有冲突,程序是否下载完整,10 秒后自动尝试重新启动" && sleep 10 && frp_restart x
