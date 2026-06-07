@@ -1,7 +1,7 @@
 #!/bin/sh
 
 frpc_enable=`nvram get frpc_enable`
-frps_enable=`nvram get frps_enable`
+frps_enable=1
 frp_tag=`nvram get frp_tag`
 http_username=`nvram get http_username`
 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
