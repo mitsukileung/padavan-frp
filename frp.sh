@@ -130,7 +130,7 @@ get_tag() {
 frp_dl () 
 {
 	tag="$1"
-	newtag="61.1"
+	newtag="0.61.1"
 	mkdir -p /tmp/frp
  	frpc_path=$(dirname "$frpc")
 	[ ! -d "$frpc_path" ] && mkdir -p "$frpc_path"
@@ -206,7 +206,7 @@ frp_start ()
   [ ! -z "$frp_tag" ] && frp_tag="$(echo $frp_tag | tr -d ' ')"
   get_tag
   get_ver
-  newtag="61.1"
+  newtag="0.61.1"
 
   if [ "$frpc_enable" = "1" ] ;then
   	sed -Ei '/【frpc】|^$/d' /tmp/script/_opt_script_check
