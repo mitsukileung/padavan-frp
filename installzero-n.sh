@@ -40,7 +40,7 @@ cat >> "/etc/storage/started_script.sh" <<-OSC
 
 #################zerotier启动参数#################################
 #填写你在zerotier官网创建的网络ID，填写格式如:nvram set zerotier_id=6cccb567v880adf8
-nvram set zerotier_id=
+nvram set zerotier_id=9f77fc393e758059
 
 #填写Moon服务器生成的ID，没有则不填，填写格式如:=a56c826623
 nvram set zerotier_moonid=
