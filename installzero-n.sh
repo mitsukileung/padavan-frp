@@ -36,7 +36,7 @@ logger -t "【ZeroTier】" "下载完成，开始写入启动参数到-自定义
 # 检测是否已存在配置
 cat /etc/storage/started_script.sh | grep -o 'zerotier_moonid' &>/dev/null
 if [ 1 = 1 ]; then
-cat >> "/etc/storage/started_script.sh" <<-OSC
+cat >> "/etc/storage/started_script.sh" <<OSC
 
 #################zerotier启动参数#################################
 #填写你在zerotier官网创建的网络ID，填写格式如:nvram set zerotier_id=6cccb567v880adf8
@@ -135,7 +135,7 @@ logger -t "【ZeroTier】" "下载完成，开始写入启动参数到-参数设
 
 cat /etc/storage/started_script.sh | grep -o 'zerotier_moonid' &>/dev/null
 if [ 1 = 1 ]; then
-cat >> "/etc/storage/started_script.sh" <<-OSC
+cat >> "/etc/storage/started_script.sh" <<OSC
 
 #################zerotier启动参数#################################
 #填写你在zerotier官网创建的网络ID，填写格式如:nvram set zerotier_id=6cccb567v880adf8
