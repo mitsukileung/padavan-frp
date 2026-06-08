@@ -62,10 +62,10 @@ OSC
 
 logger -t "【ZeroTier】" "1.请在参数设置-脚本-在路由器启动后执行里填入 zerotier_id 并应用保存设置"
 echo  "1.请在参数设置-脚本-在路由器启动后执行里填入 zerotier_id 并应用保存设置"
-logger -t "【ZeroTier】" "2.在 [系统管理] ——> [控制台] 输入 nvram set zerotier_id=9f77fc393e758059 和 nvram commit 命令"
-echo  "2.在 [系统管理] ——> [控制台] 输入 nvram set zerotier_id=9f77fc393e758059 和 nvram commit 命令"
-logger -t "【ZeroTier】" "3.打开ttyd或者ssh输入 /etc/storage/zerotier.sh start 命令手动启动或者直接重启路由" 
-echo "3.打开ttyd或者ssh输入 /etc/storage/zerotier.sh start 命令手动启动或者直接重启路由" 
+logger -t "【ZeroTier】" "2.在TTYD或者SSH输入 nvram set zerotier_id=9f77fc393e758059 和 nvram commit 命令"
+echo  "2.在TTYD或者SSH输入 nvram set zerotier_id=9f77fc393e758059 和 nvram commit 命令"
+logger -t "【ZeroTier】" "3.在TTYD或者SSH输入 /etc/storage/zerotier.sh start 命令或者直接重启路由"
+echo "3.在TTYD或者SSH输入 /etc/storage/zerotier.sh start 命令或者直接重启路由"
 else
 echo "自定义设置-脚本-在路由启动后执行里已有相关启动参数无法写入"
 logger -t "【ZeroTier】" "自定义设置-脚本-在路由启动后执行里已有相关启动参数无法写入"
@@ -161,10 +161,10 @@ OSC
 
 logger -t "【ZeroTier】" "1.请在参数设置-脚本-在路由器启动后执行里填入 zerotier_id 并应用保存设置"
 echo  "1.请在参数设置-脚本-在路由器启动后执行里填入 zerotier_id 并应用保存设置"
-logger -t "【ZeroTier】" "2.在 [系统管理] ——> [控制台] 输入 nvram set zerotier_id=9f77fc393e758059 和 nvram commit 命令"
-echo  "2.在 [系统管理] ——> [控制台] 输入 nvram set zerotier_id=9f77fc393e758059 和 nvram commit 命令"
-logger -t "【ZeroTier】" "3.打开ttyd或者ssh输入 /etc/storage/zerotier.sh start 命令手动启动或者直接重启路由" 
-echo "3.打开ttyd或者ssh输入 /etc/storage/zerotier.sh start 命令手动启动或者直接重启路由" 
+logger -t "【ZeroTier】" "2.在TTYD或者SSH输入 nvram set zerotier_id=9f77fc393e758059 和 nvram commit 命令"
+echo  "2.在TTYD或者SSH输入 nvram set zerotier_id=9f77fc393e758059 和 nvram commit 命令"
+logger -t "【ZeroTier】" "3.在TTYD或者SSH输入 /etc/storage/zerotier.sh start 命令或者直接重启路由"
+echo "3.在TTYD或者SSH输入 /etc/storage/zerotier.sh start 命令或者直接重启路由"
 else
 echo "参数设置-脚本-在路由启动后执行里已有相关启动参数无法写入"
 logger -t "【ZeroTier】" "参数设置-脚本-在路由启动后执行里已有相关启动参数无法写入"
